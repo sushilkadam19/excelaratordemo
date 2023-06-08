@@ -1,1 +1,38 @@
+#Define the workflow triggers, such as a push or pull request event.
+name: Update Variables
+on:
+  push:
+    branches:
+      - main
+#Set up the necessary environment and checkout the repository.
+jobs:
+  update-variables:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up other environment dependencies here
+      - name: Prompt for variable inputs
+        id: prompt
+        run: |
+          echo "::set-output name=rgname::${{ github.event.inputs.rgname }}"
+          echo "::set-output name=location::${{ github.event.inputs.location }}"
+          # Add other variables and outputs as needed
+        env:
+          rgname: ${{ github.event.inputs.rgname }}
+          location: ${{ github.event.inputs.location }}
+      - name: Update variable.tfvars
+        run: |
+          sed -i "s/rgname = .*/rgname = \"${{ env.rgname }}\"/" variable.tfvars
+          sed -i "s/location = .*/location = \"${{ env.location }}\"/" variable.tfvars
+          # Update other variables and values as needed
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add variable.tfvars
+          git commit -m "Update variables"
+          git push
 
